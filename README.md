@@ -3,7 +3,7 @@ Overview
 
 Can you use movement, temperature, and proximity sensor data to differentiate between body-focused repetitive behaviors (BFRBs), like hair pulling, from non-BFRB everyday gestures, like adjusting glasses? The goal of this competition is to develop a predictive model that distinguishes BFRB-like and non-BFRB-like activity using data from a variety of sensors collected via a wrist-worn device. Successfully disentangling these behaviors will improve the design and accuracy of wearable BFRB-detection devices, which are relevant to a wide range of mental illnesses, ultimately strengthening the tools available to support their treatment.
 
-<img width="498" height="756" alt="image" src="https://github.com/user-attachments/assets/a096eec3-736e-43ba-8715-740367240c41" />
+<img width="298" height="556" alt="image" src="https://github.com/user-attachments/assets/a096eec3-736e-43ba-8715-740367240c41" />
 
 
 Description
