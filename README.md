@@ -65,3 +65,5 @@ If your submission includes a gesture value not found in the train set your subm
 
 Submission File
 You must submit to this competition using the provided evaluation API, which ensures that models perform inference on a single sequence at a time. For each sequence_id in the test set, you must predict the corresponding gesture.
+
+source: https://www.kaggle.com/competitions/cmi-detect-behavior-with-sensor-data/overview
