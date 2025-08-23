@@ -74,10 +74,10 @@ def collate_fn(batch, is_test=False):
 # ======================
 
 # Create train dataset first to fit scalers and label encoder
-train_dataset = dataloader.SensorSequenceDataset(train_ids[:500], train, is_test=False)
+train_dataset = dataloader.SensorSequenceDataset(train_ids[:100], train, is_test=False)
 
 # Use the fitted scalers and label encoder for validation and test
-val_dataset = dataloader.SensorSequenceDataset(val_ids[:200], train, is_test=False,
+val_dataset = dataloader.SensorSequenceDataset(val_ids[:100], train, is_test=False,
                                                label_encoder=train_dataset.le,
                                                scalers=train_dataset.scalers)
 
