@@ -13,18 +13,6 @@ from sklearn.preprocessing import LabelEncoder, StandardScaler
 # ======================
 
 
-train_path = r"D:\Kaggle\cmi-detect-behavior-with-sensor-data\train.csv"
-test_path = r"D:\Kaggle\cmi-detect-behavior-with-sensor-data\test.csv"
-
-# Load data
-train = pd.read_csv(train_path)
-test = pd.read_csv(test_path)
-
-from torch.utils.data import Dataset
-import numpy as np
-import torch
-
-
 class SensorSequenceDataset(Dataset):
     def __init__(self, sequence_ids, dataframe):
         super().__init__()
@@ -78,15 +66,3 @@ class SensorSequenceDataset(Dataset):
         return acc_tensor, rot_tensor, thm_tensor, tof_tensor, target_tensor
 
 
-# Create dataset
-dataset = SensorSequenceDataset(train['sequence_id'].unique()[:1], train)
-
-# Create dataloader
-dataloader = DataLoader(dataset, batch_size=1, shuffle=True)
-
-count = 0
-for acc_tensor, rot_tensor, thm_tensor, tof_tensor, target_tensor in dataloader:
-    print(
-        f"Shapes - acc: {acc_tensor.shape}, rot: {rot_tensor.shape}, thm: {thm_tensor.shape}, tof: {tof_tensor.shape}, Target: {target_tensor}, ")
-    if count ==0:
-        break
