@@ -79,3 +79,4 @@ class SensorSequenceDataset(Dataset):
         else:
             target_tensor = torch.tensor(target, dtype=torch.long)
             return acc_tensor, rot_tensor, thm_tensor, tof_tensor, target_tensor
+
