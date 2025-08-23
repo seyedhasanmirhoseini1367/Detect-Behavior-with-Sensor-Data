@@ -51,7 +51,8 @@ class TOFEncoder(nn.Module):
         self.cnn = nn.Sequential(
             nn.Conv2d(in_channels=in_channels, out_channels=conv_channels[0], kernel_size=kernel_size[0], padding=1),
             nn.ReLU(),
-            nn.Conv2d(in_channels=conv_channels[0], out_channels=conv_channels[1], kernel_size=kernel_size[1], padding=1),
+            nn.Conv2d(in_channels=conv_channels[0], out_channels=conv_channels[1], kernel_size=kernel_size[1],
+                      padding=1),
             nn.ReLU(),
             nn.AdaptiveAvgPool2d((pool_size[0], pool_size[1]))
         )

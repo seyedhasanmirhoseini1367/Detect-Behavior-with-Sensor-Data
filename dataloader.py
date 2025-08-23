@@ -1,68 +1,81 @@
-import pandas as pd
-import numpy as np
 import torch
-from torch.utils.data import Dataset, DataLoader
-import torch.nn as nn
-import torch.optim as optim
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import LabelEncoder, StandardScaler
-
-
-# ======================
-# Load Data
-# ======================
+from torch.utils.data import Dataset
+import numpy as np
+from sklearn.preprocessing import StandardScaler, LabelEncoder
 
 
 class SensorSequenceDataset(Dataset):
-    def __init__(self, sequence_ids, dataframe):
-        super().__init__()
+    def __init__(self, sequence_ids, dataframe, is_test=False, label_encoder=None, scalers=None):
+        """
+        sequence_ids: list of unique sequence IDs
+        dataframe: full dataframe with all sequences
+        is_test: True for test set (no targets)
+        label_encoder: fitted LabelEncoder for gestures (required if not training)
+        scalers: dict of fitted StandardScalers for each modality
+        """
         self.sequence_ids = sequence_ids
         self.df = dataframe
+        self.is_test = is_test
 
-        self.l = LabelEncoder()
-        self.df['gesture_encoded'] = self.l.fit_transform(self.df['gesture'])
+        # Define columns
+        self.acc_cols = ['acc_x', 'acc_y', 'acc_z']
+        self.rot_cols = ['rot_w', 'rot_x', 'rot_y', 'rot_z']
+        self.thm_cols = ['thm_1', 'thm_2', 'thm_3', 'thm_4', 'thm_5']
+        self.tof_cols = [f'tof_{i}_v{j}' for i in range(1, 6) for j in range(64)]
+
+        # Label encoding
+        if not is_test:
+            if label_encoder is None:
+                self.le = LabelEncoder()
+                self.df['gesture_encoded'] = self.le.fit_transform(self.df['gesture'])
+            else:
+                self.le = label_encoder
+                self.df['gesture_encoded'] = self.le.transform(self.df['gesture'])
+
+        # Feature scaling - only use data from provided sequence_ids for fitting
+        if scalers is None:
+            # Fit scalers only on the current dataset sequences (usually train)
+            train_data = self.df[self.df['sequence_id'].isin(self.sequence_ids)]
+            self.scalers = {
+                'acc': StandardScaler().fit(train_data[self.acc_cols]),
+                'rot': StandardScaler().fit(train_data[self.rot_cols]),
+                'thm': StandardScaler().fit(train_data[self.thm_cols]),
+                'tof': StandardScaler().fit(train_data[self.tof_cols])
+            }
+        else:
+            self.scalers = scalers
 
     def __len__(self):
         return len(self.sequence_ids)
 
     def __getitem__(self, idx):
-        # Get the sequence_id
-        seq_id = self.sequence_ids.iloc[idx] if hasattr(self.sequence_ids, 'iloc') else self.sequence_ids[idx]
-
-        # Get all rows for this sequence_id
+        seq_id = self.sequence_ids[idx]
         sequence_data = self.df[self.df['sequence_id'] == seq_id]
 
-        # Define sensor columns
-        tof_cols = [f'tof_{i}_v{j}' for i in range(1, 6) for j in range(64)]
-        acc_cols = ['acc_x', 'acc_y', 'acc_z']
-        rot_cols = ['rot_w', 'rot_x', 'rot_y', 'rot_z']
-        thm_cols = ['thm_1', 'thm_2', 'thm_3', 'thm_4', 'thm_5']
+        # Get target from first row (should be same for all rows in sequence)
+        if not self.is_test:
+            target = sequence_data.iloc[0]['gesture_encoded']
 
-        # Initialize lists for the sequence
-        acc_sequence, rot_sequence, thm_sequence, tof_sequence = [], [], [], []
+        # Extract all data at once and fill NaNs
+        acc_data = sequence_data[self.acc_cols].fillna(0).values.astype(np.float32)
+        rot_data = sequence_data[self.rot_cols].fillna(0).values.astype(np.float32)
+        thm_data = sequence_data[self.thm_cols].fillna(0).values.astype(np.float32)
+        tof_data = sequence_data[self.tof_cols].fillna(0).values.astype(np.float32)
 
-        for _, row in sequence_data.iterrows():
-            # Handle NaN values
-            acc = np.nan_to_num(row[acc_cols].values.astype(np.float32), nan=0.0)
-            rot = np.nan_to_num(row[rot_cols].values.astype(np.float32), nan=0.0)
-            thm = np.nan_to_num(row[thm_cols].values.astype(np.float32), nan=0.0)
-            tof = np.nan_to_num(row[tof_cols].values.astype(np.float32), nan=0.0)
-
-            acc_sequence.append(acc)
-            rot_sequence.append(rot)
-            thm_sequence.append(thm)
-            tof_sequence.append(tof)
-
-            target = row['gesture_encoded']  # Same for all rows in sequence
+        # Normalize using fitted scalers (batch transform for efficiency)
+        acc_normalized = self.scalers['acc'].transform(acc_data)
+        rot_normalized = self.scalers['rot'].transform(rot_data)
+        thm_normalized = self.scalers['thm'].transform(thm_data)
+        tof_normalized = self.scalers['tof'].transform(tof_data)
 
         # Convert to tensors
-        # Shape: [sequence_length, num_features]
-        acc_tensor = torch.tensor(np.array(acc_sequence), dtype=torch.float32)
-        rot_tensor = torch.tensor(np.array(rot_sequence), dtype=torch.float32)
-        thm_tensor = torch.tensor(np.array(thm_sequence), dtype=torch.float32)
-        tof_tensor = torch.tensor(np.array(tof_sequence), dtype=torch.float32)
-        target_tensor = torch.tensor(target, dtype=torch.long)
+        acc_tensor = torch.tensor(acc_normalized, dtype=torch.float32)
+        rot_tensor = torch.tensor(rot_normalized, dtype=torch.float32)
+        thm_tensor = torch.tensor(thm_normalized, dtype=torch.float32)
+        tof_tensor = torch.tensor(tof_normalized, dtype=torch.float32)
 
-        return acc_tensor, rot_tensor, thm_tensor, tof_tensor, target_tensor
-
-
+        if self.is_test:
+            return acc_tensor, rot_tensor, thm_tensor, tof_tensor
+        else:
+            target_tensor = torch.tensor(target, dtype=torch.long)
+            return acc_tensor, rot_tensor, thm_tensor, tof_tensor, target_tensor
