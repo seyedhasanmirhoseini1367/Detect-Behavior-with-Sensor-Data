@@ -1,51 +1,48 @@
 
 Overview
+
 Can you use movement, temperature, and proximity sensor data to differentiate between body-focused repetitive behaviors (BFRBs), like hair pulling, from non-BFRB everyday gestures, like adjusting glasses? The goal of this competition is to develop a predictive model that distinguishes BFRB-like and non-BFRB-like activity using data from a variety of sensors collected via a wrist-worn device. Successfully disentangling these behaviors will improve the design and accuracy of wearable BFRB-detection devices, which are relevant to a wide range of mental illnesses, ultimately strengthening the tools available to support their treatment.
-Description
-Body-focused repetitive behaviors (BFRBs), such as hair pulling, skin picking, and nail biting, are self-directed habits involving repetitive actions that, when frequent or intense, can cause physical harm and psychosocial challenges. These behaviors are commonly seen in anxiety disorders and obsessive-compulsive disorder (OCD), thus representing key indicators of mental health challenges.
 
 <img width="498" height="756" alt="image" src="https://github.com/user-attachments/assets/a096eec3-736e-43ba-8715-740367240c41" />
 
 
-hand
+Description
+Body-focused repetitive behaviors (BFRBs), such as hair pulling, skin picking, and nail biting, are self-directed habits involving repetitive actions that, when frequent or intense, can cause physical harm and psychosocial challenges. These behaviors are commonly seen in anxiety disorders and obsessive-compulsive disorder (OCD), thus representing key indicators of mental health challenges.
 
 To investigate BFRBs, the Child Mind Institute has developed a wrist-worn device, Helios, designed to detect these behaviors. While many commercially available devices contain Inertial Measurement Units (IMUs) to measure rotation and motion, the Helios watch integrates additional sensors, including 5 thermopiles (for detecting body heat) and 5 time-of-flight sensors (for detecting proximity). See the figure to the right for the placement of these sensors on the Helios device.
 
 We conducted a research study to test the added value of these additional sensors for detecting BFRB-like movements. In the study, participants performed series of repeated gestures while wearing the Helios device:
 
-They began a transition from “rest” position and moved their hand to the appropriate location (Transition);
+1. They began a transition from “rest” position and moved their hand to the appropriate location (Transition);
 
-They followed this with a short pause wherein they did nothing (Pause); and
+2. They followed this with a short pause wherein they did nothing (Pause); and
 
-Finally they performed a gesture from either the BFRB-like or non-BFRB-like category of movements (Gesture; see Table below).
+3. Finally they performed a gesture from either the BFRB-like or non-BFRB-like category of movements (Gesture; see Table below).
 
 Each participant performed 18 unique gestures (8 BFRB-like gestures and 10 non-BFRB-like gestures) in at least 1 of 4 different body-positions (sitting, sitting leaning forward with their non-dominant arm resting on their leg, lying on their back, and lying on their side). These gestures are detailed in the table below, along with a video of the gesture.
 
-BFRB-Like Gesture (Target Gesture)	Video Example
-Above ear - Pull hair	Sitting
-Forehead - Pull hairline	Sitting leaning forward
-Forehead - Scratch	Sitting
-Eyebrow - Pull hair	Sitting
-Eyelash - Pull hair	Sitting
-Neck - Pinch skin	Sitting
-Neck - Scratch	Sitting
-Cheek - Pinch skin	Sitting,
-Sitting leaning forward,
-Lying on back,
-Lying on side
+BFRB-Like Gesture (Target Gesture)	
+Above ear - Pull hair	 
+Forehead - Pull hairline	
+Forehead - Scratch	
+Eyebrow - Pull hair	
+Eyelash - Pull hair	
+Neck - Pinch skin	
+Neck - Scratch	
+Cheek - Pinch skin
 
 
-Non-BFRB-Like Gesture (Non-Target Gesture)	Video Example
-Drink from bottle/cup	Sitting
-Glasses on/off	Sitting
-Pull air toward your face	Sitting
-Pinch knee/leg skin	Sitting leaning forward
-Scratch knee/leg skin	Sitting leaning forward
-Write name on leg	Sitting leaning forward
-Text on phone	Sitting
-Feel around in tray and pull out an object	Sitting
-Write name in air	Sitting
-Wave hello	Sitting
+Non-BFRB-Like Gesture (Non-Target Gesture)
+Drink from bottle/cup	
+Glasses on/off	
+Pull air toward your face	
+Pinch knee/leg skin	
+Scratch knee/leg skin	
+Write name on leg	 
+Text on phone	
+Feel around in tray and pull out an object	
+Write name in air	
+Wave hello	
 
 
 This competition challenges you to develop a predictive model capable of distinguishing (1) BFRB-like gestures from non-BFRB-like gestures and (2) the specific type of BFRB-like gesture. Critically, when your model is evaluated, half of the test set will include only data from the IMU, while the other half will include all of the sensors on the Helios device (IMU, thermopiles, and time-of-flight sensors).
