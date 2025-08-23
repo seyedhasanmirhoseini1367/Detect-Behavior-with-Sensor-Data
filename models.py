@@ -99,6 +99,7 @@ class TOFEncoder(nn.Module):
 # ======================================================================
 
 
+'''
 class Fusion(nn.Module):
     def __init__(self, acc_dim=3, acc_hidden_size=32, rot_dim=4, rot_hidden_size=64,
                  thm_dim=5, thm_hidden_size=32, num_classes=18):
@@ -137,4 +138,89 @@ class Fusion(nn.Module):
 
         # Classification
         out = self.classification(fused)
+        return out
+
+
+'''
+
+
+
+class Fusion(nn.Module):
+    def __init__(self, acc_dim=3, acc_hidden_size=32, rot_dim=4, rot_hidden_size=64,
+                 thm_dim=5, thm_hidden_size=32, num_classes=18, 
+                 nhead=8, num_layers=2, dim_feedforward=512, dropout=0.1):
+        super(Fusion, self).__init__()
+
+        # GRU encoders
+        self.acc_gru = GRUEncoder(input_size=acc_dim, hidden_size=acc_hidden_size)
+        self.rot_gru = GRUEncoder(input_size=rot_dim, hidden_size=rot_hidden_size)
+        self.thm_gru = GRUEncoder(input_size=thm_dim, hidden_size=thm_hidden_size)
+
+        # TOF encoder
+        self.tof_encoder = TOFEncoder()  # TOFEncoder returns pooled_embedding of size output_dim
+
+        # Compute in_features dynamically
+        self.in_features = acc_hidden_size + rot_hidden_size + thm_hidden_size + self.tof_encoder.output_dim
+        self.d_model = self.in_features
+
+        # Transformer encoder
+        self.transformer_encoder = nn.TransformerEncoder(
+            encoder_layer=nn.TransformerEncoderLayer(
+                d_model=self.d_model,
+                nhead=nhead,
+                dim_feedforward=dim_feedforward,
+                dropout=dropout,
+                batch_first=True
+            ),
+            num_layers=num_layers
+        )
+        
+        # Learnable [CLS] token for classification
+        self.cls_token = nn.Parameter(torch.randn(1, 1, self.d_model))
+        
+        # Positional encoding (optional but recommended for sequence modeling)
+        self.positional_encoding = nn.Parameter(torch.randn(1, 1000, self.d_model))  # max sequence length 1000
+
+        # Classification MLP
+        self.classification = nn.Sequential(
+            nn.Linear(self.d_model, 256),
+            nn.ReLU(),
+            nn.Dropout(0.2),
+            nn.Linear(256, 128),
+            nn.ReLU(),
+            nn.Dropout(0.2),
+            nn.Linear(128, num_classes)
+        )
+
+    def forward(self, acc_tensor, rot_tensor, thm_tensor, tof_tensor):
+        pooled_acc = self.acc_gru(acc_tensor)  # (batch, acc_hidden_size)
+        pooled_rot = self.rot_gru(rot_tensor)  # (batch, rot_hidden_size)
+        pooled_thm = self.thm_gru(thm_tensor)  # (batch, thm_hidden_size)
+        pooled_tof = self.tof_encoder(tof_tensor)  # (batch, tof_feature_dim)
+
+        # Concatenate all features
+        fused = torch.cat([pooled_acc, pooled_rot, pooled_thm, pooled_tof], dim=1)  # (batch, d_model)
+        
+        # Add sequence dimension and repeat for transformer input
+        fused = fused.unsqueeze(1)  # (batch, 1, d_model)
+        
+        # Add [CLS] token
+        batch_size = fused.size(0)
+        cls_tokens = self.cls_token.expand(batch_size, -1, -1)  # (batch, 1, d_model)
+        
+        # Concatenate [CLS] token with fused features
+        transformer_input = torch.cat([cls_tokens, fused], dim=1)  # (batch, 2, d_model)
+        
+        # Add positional encoding (truncate if needed)
+        seq_len = transformer_input.size(1)
+        transformer_input = transformer_input + self.positional_encoding[:, :seq_len, :]
+        
+        # Apply transformer encoder
+        transformer_output = self.transformer_encoder(transformer_input)  # (batch, 2, d_model)
+        
+        # Use the [CLS] token output for classification
+        cls_output = transformer_output[:, 0, :]  # (batch, d_model)
+
+        # Classification
+        out = self.classification(cls_output)
         return out
